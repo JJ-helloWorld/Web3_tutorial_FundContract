@@ -1,0 +1,30 @@
+const {task} = require("hardhat/config")
+
+
+task("interact-fundme").addParam("addr","fundme contract address").setAction(async(taskArgs,hre)=>{
+       const fundMeFactory = await ethers.getContractFactory("FundMe")
+       const fundMe = fundMeFactory.attach(taskArgs.addr)
+
+      //init 2 accounts
+         const [firstAccount, secondAccount]= await ethers.getSigners()
+         //fund contract with first accout
+         const fundTx = await fundMe.fund({value: ethers.parseEther("0.003")})
+         await fundTx.wait()
+    
+         //check balance of contract
+        const balanceOfContract = await ethers.provider.getBalance(fundMe.target)
+        console.log(`Balance of the contract is ${balanceOfContract}`)
+    
+    
+         //fund contract with second account
+         const fundTxWithSecondAccount = await fundMe.connect(secondAccount).fund({value: ethers.parseEther("0.003")})
+         await fundTxWithSecondAccount.wait()
+         //check balance of contact
+         const balanceOfContractAfterSecondAccount = await ethers.provider.getBalance(fundMe.target)
+         console.log(`Balance of the contract is ${balanceOfContractAfterSecondAccount}`)
+         //check mapping fundersToAmout
+         const firstAccountbalanceInFundME = await fundMe.fundersToAmount(firstAccount.address)
+         const secondAccountbalanceInFundME = await fundMe.fundersToAmount(secondAccount.address)
+         console.log(`Balance of the first account is ${firstAccount.address} is ${firstAccountbalanceInFundME}`)
+         console.log(`Balance of the second account is ${secondAccount.address} is ${secondAccountbalanceInFundME}`)
+})
